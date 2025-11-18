@@ -1,4 +1,6 @@
-// --- DOM refs ---
+// ==============================
+// DOM REFS
+// ==============================
 const likeBtn = document.getElementById("likeBtn");
 const commentToggle = document.getElementById("commentToggle");
 const commentForm = document.getElementById("commentForm");
@@ -7,7 +9,9 @@ const submitComment = document.getElementById("submitComment");
 const cancelComment = document.getElementById("cancelComment");
 const noticeBar = document.getElementById("notice");
 
-// --- Helper: UI Notice ---
+// ==============================
+// NOTICE SYSTEM
+// ==============================
 function setNotice(msg, timeout = 1500) {
   if (!noticeBar) return;
   noticeBar.textContent = msg;
@@ -15,7 +19,9 @@ function setNotice(msg, timeout = 1500) {
   if (timeout) setTimeout(() => noticeBar.classList.add("hidden"), timeout);
 }
 
-// --- Store + Retrieve Token ---
+// ==============================
+// TOKEN STORAGE
+// ==============================
 function saveToken(token) {
   localStorage.setItem("meow_token", token);
 }
@@ -24,33 +30,31 @@ function getToken() {
   return localStorage.getItem("meow_token");
 }
 
-// --- Headers for authenticated API calls ---
 function authHeaders() {
   const token = getToken();
   return token ? { "x-meow-token": token } : {};
 }
 
-// ========================================
-// 1. Receive OAuth Token From Popup
-// ========================================
+// ==============================
+// RECEIVE OAUTH TOKEN FROM POPUP
+// ==============================
 window.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "meow_token") {
-    const token = event.data.token;
-    if (token) {
-      console.log("Received GitHub token:", token);
-      saveToken(token);
-      setNotice("Authenticated — welcome back!", 2000);
-    }
+  if (!event.data || event.data.type !== "meow_token") return;
+
+  const token = event.data.token;
+  if (token) {
+    console.log("Received GitHub token:", token);
+    saveToken(token);
+    setNotice("Authenticated — welcome back!", 2000);
   }
 });
 
-// ========================================
-// 2. Login Flow
-// ========================================
+// ==============================
+// LOGIN FLOW (POPUP)
+// ==============================
 function promptLogin(reason) {
   const ok = confirm(
-    reason +
-      "\n\nYou will be redirected to GitHub to authorize this application."
+    reason + "\n\nYou will be redirected to GitHub to authorize."
   );
   if (!ok) return;
 
@@ -68,102 +72,112 @@ function promptLogin(reason) {
   }, 500);
 }
 
-// ========================================
-// 3. LIKE / STAR Button
-// ========================================
-likeBtn.addEventListener("click", async () => {
-  setNotice("Processing like...");
+// ==============================
+// LIKE / STAR
+// ==============================
+if (likeBtn) {
+  likeBtn.addEventListener("click", async () => {
+    setNotice("Processing like...");
 
-  const res = await fetch("/api/toggle-star", {
-    method: "POST",
-    credentials: "include",
-    headers: authHeaders(),
+    const res = await fetch("/api/toggle-star", {
+      method: "POST",
+      credentials: "include",
+      headers: authHeaders()
+    });
+
+    if (res.status === 401) {
+      promptLogin("To star this repository, you must sign in with GitHub.");
+      setNotice("Please login to continue.");
+      return;
+    }
+
+    if (!res.ok) {
+      setNotice("Error: " + (await res.text()));
+      return;
+    }
+
+    const j = await res.json();
+    likeBtn.textContent = j.starred ? "★ Starred" : "☆ Like";
+    setNotice(j.starred ? "Repository starred ⭐" : "Repository unstarred");
   });
+}
 
-  if (res.status === 401) {
-    promptLogin("To like/star this repository, please sign in via GitHub.");
-    setNotice("Please login to continue.");
-    return;
-  }
-
-  if (!res.ok) {
-    const t = await res.text();
-    setNotice("Error: " + t);
-    return;
-  }
-
-  const j = await res.json();
-  likeBtn.textContent = j.starred ? "★ Starred" : "☆ Like";
-  setNotice(j.starred ? "Repository starred! ⭐" : "Repository unstarred");
-});
-
-// ========================================
-// 4. COMMENT UI Events
-// ========================================
-commentToggle.addEventListener("click", () => {
-  commentForm.classList.toggle("hidden");
-});
-
-cancelComment.addEventListener("click", () => {
-  commentForm.classList.add("hidden");
-  commentText.value = "";
-});
-
-submitComment.addEventListener("click", async () => {
-  const body = commentText.value.trim();
-  if (!body) {
-    setNotice("Comment cannot be empty");
-    return;
-  }
-
-  setNotice("Posting comment...");
-
-  const res = await fetch("/api/comment", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders(),
-    },
-    body: JSON.stringify({ body }),
+// ==============================
+// COMMENT UI EVENTS
+// ==============================
+if (commentToggle) {
+  commentToggle.addEventListener("click", () => {
+    commentForm.classList.toggle("hidden");
   });
+}
 
-  if (res.status === 401) {
-    promptLogin("To post a comment you must sign in via GitHub.");
-    return;
-  }
+if (cancelComment) {
+  cancelComment.addEventListener("click", () => {
+    commentForm.classList.add("hidden");
+    commentText.value = "";
+  });
+}
 
-  if (!res.ok) {
-    const t = await res.text();
-    setNotice("Error: " + t);
-    return;
-  }
+if (submitComment) {
+  submitComment.addEventListener("click", async () => {
+    const body = commentText.value.trim();
+    if (!body) {
+      setNotice("Comment cannot be empty");
+      return;
+    }
 
-  setNotice("Comment posted — thanks!");
-  commentForm.classList.add("hidden");
-  commentText.value = "";
-});
+    setNotice("Posting comment...");
 
-// ========================================
-// 5. INIT – Load session & Star status
-// ========================================
+    const res = await fetch("/api/comment", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders()
+      },
+      body: JSON.stringify({ body })
+    });
+
+    if (res.status === 401) {
+      promptLogin("To post a comment you must sign in with GitHub.");
+      return;
+    }
+
+    if (!res.ok) {
+      setNotice("Error: " + (await res.text()));
+      return;
+    }
+
+    setNotice("Comment posted — thanks!");
+    commentForm.classList.add("hidden");
+    commentText.value = "";
+  });
+}
+
+// ==============================
+// INIT
+// ==============================
 (async function init() {
   try {
     const token = getToken();
-    if (!token) return;
+    if (!token) return; // user not logged in
 
-    // Check whether repo is starred
     const res = await fetch("/api/status", {
       credentials: "include",
-      headers: authHeaders(),
+      headers: authHeaders()
     });
 
-    if (res.ok) {
-      const j = await res.json();
+    if (!res.ok) return;
+
+    const j = await res.json();
+
+    if (likeBtn)
       likeBtn.textContent = j.starred ? "★ Starred" : "☆ Like";
-      if (j.username) setNotice("Signed in as " + j.username, 2000);
-    }
-  } catch (e) {
-    console.warn("Init failed:", e);
+
+    if (j.username)
+      setNotice("Signed in as " + j.username, 2000);
+
+  } catch (err) {
+    console.warn("Init failed:", err);
   }
 })();
