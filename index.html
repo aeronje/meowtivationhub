@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Meowtivation — Behind the Scenes</title>
+<link rel="stylesheet" href="/assets/style.css" />
+<!-- Plyr CSS (cdn) -->
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+</head>
+<body>
+<main class="page">
+<section class="card">
+<div class="card-media">
+<video id="player" playsinline controls crossorigin>
+<source src="https://pub-59b2b96ee6544b7ab59e53045f492712.r2.dev/capstone_day6_behind_the_scenes_02.mp4" type="video/mp4" />
+</video>
+</div>
+<div class="card-body">
+<h1 class="title">Meowtivation: Behind the Scenes</h1>
+<p class="subtitle">Fluffy tabby playtime — support by starring the repo or dropping a comment!</p>
+<div class="controls">
+<button id="likeBtn" class="btn like">☆ Like</button>
+<button id="commentToggle" class="btn comment">💬 Comment</button>
+</div>
+<form id="commentForm" class="comment-form hidden">
+<textarea id="commentText" placeholder="Write a short encouraging comment..." rows="3"></textarea>
+<div class="comment-actions">
+<button type="button" id="submitComment" class="btn submit">Post comment</button>
+<button type="button" id="cancelComment" class="btn cancel">Cancel</button>
+</div>
+</form>
+<p class="notice" id="notice"></p>
+</div>
+</section>
+</main>
+
+
+<!-- Plyr JS -->
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script src="/assets/app.js"></script>
+</body>
+</html>
