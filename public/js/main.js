@@ -1,183 +1,92 @@
-// ==============================
-// DOM REFS
-// ==============================
-const likeBtn = document.getElementById("likeBtn");
-const commentToggle = document.getElementById("commentToggle");
-const commentForm = document.getElementById("commentForm");
-const commentText = document.getElementById("commentText");
-const submitComment = document.getElementById("submitComment");
-const cancelComment = document.getElementById("cancelComment");
-const noticeBar = document.getElementById("notice");
+// === Initialize Plyr ===
 
-// ==============================
-// NOTICE SYSTEM
-// ==============================
-function setNotice(msg, timeout = 1500) {
-  if (!noticeBar) return;
-  noticeBar.textContent = msg;
-  noticeBar.classList.remove("hidden");
-  if (timeout) setTimeout(() => noticeBar.classList.add("hidden"), timeout);
-}
+document.addEventListener("DOMContentLoaded", () => {
+    new Plyr('#player');
 
-// ==============================
-// TOKEN STORAGE
-// ==============================
-function saveToken(token) {
-  localStorage.setItem("meow_token", token);
-}
-
-function getToken() {
-  return localStorage.getItem("meow_token");
-}
-
-function authHeaders() {
-  const token = getToken();
-  return token ? { "x-meow-token": token } : {};
-}
-
-// ==============================
-// RECEIVE OAUTH TOKEN FROM POPUP
-// ==============================
-window.addEventListener("message", (event) => {
-  if (!event.data || event.data.type !== "meow_token") return;
-
-  const token = event.data.token;
-  if (token) {
-    console.log("Received GitHub token:", token);
-    saveToken(token);
-    setNotice("Authenticated — welcome back!", 2000);
-  }
+    setupButtons();
+    fetchStars();
+    fetchComments();
 });
 
-// ==============================
-// LOGIN FLOW (POPUP)
-// ==============================
-function promptLogin(reason) {
-  const ok = confirm(
-    reason + "\n\nYou will be redirected to GitHub to authorize."
-  );
-  if (!ok) return;
+// === BUTTON POPUP HANDLERS ===
+function setupButtons() {
+    const likeBtn = document.getElementById("likeBtn");
+    const commentToggle = document.getElementById("commentToggle");
 
-  const w = window.open(
-    "/api/login",
-    "github_login",
-    "width=720,height=700"
-  );
-
-  const timer = setInterval(() => {
-    if (w && w.closed) {
-      clearInterval(timer);
-      setNotice("Returning from GitHub — verifying session...");
-    }
-  }, 500);
-}
-
-// ==============================
-// LIKE / STAR
-// ==============================
-if (likeBtn) {
-  likeBtn.addEventListener("click", async () => {
-    setNotice("Processing like...");
-
-    const res = await fetch("/api/toggle-star", {
-      method: "POST",
-      credentials: "include",
-      headers: authHeaders()
+    likeBtn.addEventListener("click", () => {
+        showPopup(
+            "Login to GitHub so you can star the repo for this content.",
+            "https://github.com/aeronje/meowtivationhub"
+        );
     });
 
-    if (res.status === 401) {
-      promptLogin("To star this repository, you must sign in with GitHub.");
-      setNotice("Please login to continue.");
-      return;
-    }
-
-    if (!res.ok) {
-      setNotice("Error: " + (await res.text()));
-      return;
-    }
-
-    const j = await res.json();
-    likeBtn.textContent = j.starred ? "★ Starred" : "☆ Like";
-    setNotice(j.starred ? "Repository starred ⭐" : "Repository unstarred");
-  });
-}
-
-// ==============================
-// COMMENT UI EVENTS
-// ==============================
-if (commentToggle) {
-  commentToggle.addEventListener("click", () => {
-    commentForm.classList.toggle("hidden");
-  });
-}
-
-if (cancelComment) {
-  cancelComment.addEventListener("click", () => {
-    commentForm.classList.add("hidden");
-    commentText.value = "";
-  });
-}
-
-if (submitComment) {
-  submitComment.addEventListener("click", async () => {
-    const body = commentText.value.trim();
-    if (!body) {
-      setNotice("Comment cannot be empty");
-      return;
-    }
-
-    setNotice("Posting comment...");
-
-    const res = await fetch("/api/comment", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders()
-      },
-      body: JSON.stringify({ body })
+    commentToggle.addEventListener("click", () => {
+        showPopup(
+            "Login to GitHub so you can post your thoughts on the issue.",
+            "https://github.com/aeronje/meowtivationhub/issues/1"
+        );
     });
-
-    if (res.status === 401) {
-      promptLogin("To post a comment you must sign in with GitHub.");
-      return;
-    }
-
-    if (!res.ok) {
-      setNotice("Error: " + (await res.text()));
-      return;
-    }
-
-    setNotice("Comment posted — thanks!");
-    commentForm.classList.add("hidden");
-    commentText.value = "";
-  });
 }
 
-// ==============================
-// INIT
-// ==============================
-(async function init() {
-  try {
-    const token = getToken();
-    if (!token) return; // user not logged in
+// === POPUP UI (simple markdown-style overlay) ===
+function showPopup(message, link) {
+    const div = document.createElement("div");
+    div.className = "popup-overlay";
 
-    const res = await fetch("/api/status", {
-      credentials: "include",
-      headers: authHeaders()
-    });
+    div.innerHTML = `
+        <div class="popup-card">
+            <p>${message}</p>
+            <a href="${link}" target="_blank" class="popup-link">Go to GitHub</a>
+            <button class="popup-close">Close</button>
+        </div>
+    `;
 
-    if (!res.ok) return;
+    document.body.appendChild(div);
+    div.querySelector(".popup-close").onclick = () => div.remove();
+}
 
-    const j = await res.json();
 
-    if (likeBtn)
-      likeBtn.textContent = j.starred ? "★ Starred" : "☆ Like";
 
-    if (j.username)
-      setNotice("Signed in as " + j.username, 2000);
+// === FETCH STAR COUNT FROM GITHUB ===
+async function fetchStars() {
+    try {
+        const res = await fetch("https://api.github.com/repos/aeronje/meowtivationhub");
+        const data = await res.json();
 
-  } catch (err) {
-    console.warn("Init failed:", err);
-  }
-})();
+        const count = data.stargazers_count || 0;
+
+        document.getElementById("starCount").textContent =
+            `⭐ Repo Stars: ${count}`;
+    } catch (err) {
+        console.error("Error fetching stars:", err);
+    }
+}
+
+
+
+// === FETCH LATEST 5 COMMENTS FROM ISSUE #1 ===
+async function fetchComments() {
+    try {
+        const res = await fetch("https://api.github.com/repos/aeronje/meowtivationhub/issues/1/comments");
+        const comments = await res.json();
+
+        const latest = comments.slice(-5).reverse(); // latest first
+
+        const container = document.getElementById("commentList");
+        container.innerHTML = "";
+
+        latest.forEach(c => {
+            const div = document.createElement("div");
+            div.className = "comment-item";
+            div.innerHTML = `
+                <p class="comment-author">🐱 ${c.user?.login}</p>
+                <p class="comment-body">${c.body}</p>
+                <hr/>
+            `;
+            container.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error("Error fetching comments:", err);
+    }
+}
