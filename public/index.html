@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/meowtivationhub/styling/enhancedglobal.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/meowtivationhub/styling/modalstyles.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/meowtivationhub/styling/disclaimer.css" />
-<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 </head>
 	
 <body>
@@ -16,10 +15,10 @@
 <section class="card">
 <div class="card-media">
   <div class="video-wrapper">
-    <video id="player" playsinline controls crossorigin>
-      <source src="/api/videoProxy.js" />
-    </video>
-  </div>
+  <video id="player" playsinline controls preload="metadata">
+    <source src="/api/videoProxy.js" type="video/mp4" />
+  </video>
+</div>
 </div>
 <div class="card-body">
 <h1 class="title">PetPal | meowtivationhub</h1>
@@ -75,7 +74,6 @@
 <script src="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/assets/images/script/aeronje.js" defer></script>
 <script src="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/assets/images/script/metafacebook.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/meowtivationhub/scripting/enhancedglobalscript.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/assets/icon/icon.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/meowtivationhub/scripting/two.js"></script>
