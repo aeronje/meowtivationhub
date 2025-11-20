@@ -5,13 +5,24 @@
       "src": "/api/(.*)",
       "dest": "/api/$1.js"
     },
+
     {
-      "src": "/(.*\\.html)",
-      "dest": "/$1"
+      "src": "/analytics",
+      "dest": "/analytics.html"
     },
+    {
+      "src": "/analyticsraw",
+      "dest": "/analyticsraw.html"
+    },
+
     {
       "src": "/",
       "dest": "/index.html"
+    },
+
+    {
+      "src": "/(.*)",
+      "dest": "/$1.html"
     }
   ]
 }
