@@ -1,7 +1,7 @@
 // Ron Penones | November 21st 2025 - Feel free to share and reproduce, the core idea is mine with some assistance of AI. Padayon!
 
 const url =
-  "https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/meowtivationhub/capstone_day8_penones.pdf";
+  "https://cdn.jsdelivr.net/gh/mobiledropbox/landing_pages_scripts@main/meowtivationhub/capstone_day9_penones.pdf";
 
 let pdfDoc = null;
 let currentPage = 1;
